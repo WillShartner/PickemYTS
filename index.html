@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YTSPickem</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-card">
+        <p class="eyebrow">Private Tracker</p>
+        <h1>YTSPickem</h1>
+        <p class="brand-copy">A dark-mode college football board for Russ and Kenny.</p>
+      </div>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Weeks</h2>
+          <button id="add-week-btn" class="button button-secondary" type="button">New Week</button>
+        </div>
+        <div id="week-list" class="week-list" aria-label="Saved weeks"></div>
+      </section>
+
+      <section class="panel compact-panel">
+        <h2>Sharing</h2>
+        <p>This version saves in your browser. Use export/import if you want to pass the data file back and forth.</p>
+        <div class="stack-actions">
+          <button id="export-btn" class="button" type="button">Export Data</button>
+          <label class="button button-secondary file-button" for="import-file">Import Data</label>
+          <input id="import-file" type="file" accept=".json">
+        </div>
+      </section>
+    </aside>
+
+    <main class="main-content">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Weekly board</p>
+          <h2 id="week-title-display">Loading...</h2>
+          <p id="week-subtitle" class="hero-copy"></p>
+        </div>
+        <div class="hero-actions">
+          <button id="duplicate-week-btn" class="button button-secondary" type="button">Duplicate Week</button>
+          <button id="delete-week-btn" class="button button-danger" type="button">Delete Week</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="meta-grid">
+          <label>
+            <span>Week Name</span>
+            <input id="week-name-input" type="text" placeholder="Week 1">
+          </label>
+          <label>
+            <span>Season</span>
+            <input id="season-input" type="text" placeholder="2026">
+          </label>
+          <label>
+            <span>Date / Notes</span>
+            <input id="week-notes-input" type="text" placeholder="Opening weekend">
+          </label>
+        </div>
+      </section>
+
+      <section class="scoreboard-grid" id="scoreboard"></section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>Games</h2>
+            <p class="section-copy">Add only the matchups you want for that week. Picks score automatically once you fill in the real winner and loser.</p>
+          </div>
+          <button id="add-game-btn" class="button" type="button">Add Game</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Game</th>
+                <th>Winner</th>
+                <th>Loser</th>
+                <th>Russ Pick W</th>
+                <th>Russ Pick L</th>
+                <th>R Pick W</th>
+                <th>R Pick L</th>
+                <th>Kenny Pick W</th>
+                <th>Kenny Pick L</th>
+                <th>K Pick W</th>
+                <th>K Pick L</th>
+                <th>Russ Action</th>
+                <th>R Act W</th>
+                <th>R Act L</th>
+                <th>Kenny Action</th>
+                <th>K Act W</th>
+                <th>K Act L</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="games-body"></tbody>
+            <tfoot id="totals-footer"></tfoot>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <template id="week-button-template">
+    <button class="week-item" type="button"></button>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
