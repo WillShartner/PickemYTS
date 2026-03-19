@@ -49,7 +49,6 @@ const elements = {
   seasonInput: document.getElementById("season-input"),
   weekNotesInput: document.getElementById("week-notes-input"),
   addWeekBtn: document.getElementById("add-week-btn"),
-  duplicateWeekBtn: document.getElementById("duplicate-week-btn"),
   deleteWeekBtn: document.getElementById("delete-week-btn"),
   addGameBtn: document.getElementById("add-game-btn"),
   gamesBody: document.getElementById("games-body"),
@@ -73,33 +72,13 @@ function initialize() {
 
 function wireEvents() {
   elements.addWeekBtn.addEventListener("click", () => {
-    const weekNumber = state.weeks.length + 1;
+    const weekNumber = getNextWeekNumber();
     const newWeek = createWeek({
       name: `Week ${weekNumber}`,
       notes: "Add a slate of games for this week.",
     });
     state.weeks.push(newWeek);
     state.selectedWeekId = newWeek.id;
-    commit();
-  });
-
-  elements.duplicateWeekBtn.addEventListener("click", () => {
-    const currentWeek = getSelectedWeek();
-    if (!currentWeek) return;
-
-    const duplicate = createWeek({
-      name: `${currentWeek.name} Copy`,
-      season: currentWeek.season,
-      notes: currentWeek.notes,
-      games: currentWeek.games.map((game) =>
-        createGame({
-          matchup: game.matchup,
-        }),
-      ),
-    });
-
-    state.weeks.push(duplicate);
-    state.selectedWeekId = duplicate.id;
     commit();
   });
 
@@ -119,10 +98,6 @@ function wireEvents() {
     const currentWeek = getSelectedWeek();
     currentWeek.games.push(createGame());
     commit();
-  });
-
-  elements.weekNameInput.addEventListener("input", (event) => {
-    updateSelectedWeek("name", event.target.value);
   });
 
   elements.seasonInput.addEventListener("input", (event) => {
@@ -457,6 +432,19 @@ function getSelectedWeek() {
 
 function findWeek(id) {
   return state.weeks.find((week) => week.id === id);
+}
+
+function getNextWeekNumber() {
+  const highestWeekNumber = state.weeks.reduce((highest, week) => {
+    const match = /^Week\s+(\d+)$/i.exec((week.name || "").trim());
+    if (!match) {
+      return highest;
+    }
+
+    return Math.max(highest, Number(match[1]));
+  }, 0);
+
+  return highestWeekNumber + 1;
 }
 
 function normalize(value) {
