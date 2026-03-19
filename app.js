@@ -90,11 +90,19 @@ function wireEvents() {
   });
 
   elements.seasonInput.addEventListener("input", (event) => {
-    updateSelectedWeek("season", event.target.value);
+    updateSelectedWeek("season", event.target.value, false);
+  });
+
+  elements.seasonInput.addEventListener("blur", (event) => {
+    updateSelectedWeek("season", event.target.value, true);
   });
 
   elements.weekNotesInput.addEventListener("input", (event) => {
-    updateSelectedWeek("notes", event.target.value);
+    updateSelectedWeek("notes", event.target.value, false);
+  });
+
+  elements.weekNotesInput.addEventListener("blur", (event) => {
+    updateSelectedWeek("notes", event.target.value, true);
   });
 
   elements.exportBtn.addEventListener("click", exportData);
@@ -230,10 +238,16 @@ function renderTotals() {
 
 function bindGameInputs() {
   elements.gamesBody.querySelectorAll("input").forEach((input) => {
-    input.addEventListener("change", (event) => {
+    input.addEventListener("input", (event) => {
       const gameId = event.target.dataset.gameId;
       const field = event.target.dataset.field;
-      updateGame(gameId, field, event.target.value);
+      updateGame(gameId, field, event.target.value, false);
+    });
+
+    input.addEventListener("blur", (event) => {
+      const gameId = event.target.dataset.gameId;
+      const field = event.target.dataset.field;
+      updateGame(gameId, field, event.target.value, true);
     });
   });
 
@@ -322,16 +336,20 @@ function scorePill(value, type) {
   return `<span class="score-pill ${type}">${value}</span>`;
 }
 
-function updateSelectedWeek(field, value) {
+function updateSelectedWeek(field, value, shouldCommit = true) {
   const week = getSelectedWeek();
   week[field] = value;
-  commit();
+  if (shouldCommit) {
+    commit();
+  }
 }
 
-function updateGame(gameId, field, value) {
+function updateGame(gameId, field, value, shouldCommit = true) {
   const game = getSelectedWeek().games.find((entry) => entry.id === gameId);
   game[field] = value;
-  commit();
+  if (shouldCommit) {
+    commit();
+  }
 }
 
 function updateActionResult(gameId, field, value) {
