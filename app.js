@@ -237,11 +237,18 @@ function renderTotals() {
 }
 
 function bindGameInputs() {
-  elements.gamesBody.querySelectorAll("input").forEach((input) => {
+  elements.gamesBody.querySelectorAll("input, textarea").forEach((input) => {
+    if (input.tagName === "TEXTAREA") {
+      autoResizeTextarea(input);
+    }
+
     input.addEventListener("input", (event) => {
       const gameId = event.target.dataset.gameId;
       const field = event.target.dataset.field;
       updateGame(gameId, field, event.target.value, false);
+      if (event.target.tagName === "TEXTAREA") {
+        autoResizeTextarea(event.target);
+      }
     });
 
     input.addEventListener("blur", (event) => {
@@ -329,6 +336,10 @@ function actionSelect(gameId, field, currentValue, pointType) {
 }
 
 function textInput(value, placeholder, gameId, field) {
+  if (field === "matchup") {
+    return `<textarea class="game-textarea" rows="2" placeholder="${placeholder}" data-game-id="${gameId}" data-field="${field}">${escapeHtml(value)}</textarea>`;
+  }
+
   return `<input type="text" value="${escapeAttribute(value)}" placeholder="${placeholder}" data-game-id="${gameId}" data-field="${field}">`;
 }
 
@@ -456,4 +467,9 @@ function escapeHtml(value) {
 
 function escapeAttribute(value) {
   return escapeHtml(value ?? "");
+}
+
+function autoResizeTextarea(textarea) {
+  textarea.style.height = "auto";
+  textarea.style.height = `${textarea.scrollHeight}px`;
 }
