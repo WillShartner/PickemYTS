@@ -3,7 +3,7 @@ const STORAGE_KEY = "yts-pickem-data-v1";
 const defaultState = () => ({
   weeks: [
     createWeek({
-      name: "Week 1",
+      name: "Week 0",
       season: new Date().getFullYear().toString(),
       notes: "Add the games you want to track.",
       games: [createGame({ matchup: "Ohio State at Texas" })],
@@ -49,7 +49,6 @@ const elements = {
   seasonInput: document.getElementById("season-input"),
   weekNotesInput: document.getElementById("week-notes-input"),
   addWeekBtn: document.getElementById("add-week-btn"),
-  deleteWeekBtn: document.getElementById("delete-week-btn"),
   addGameBtn: document.getElementById("add-game-btn"),
   gamesBody: document.getElementById("games-body"),
   totalsFooter: document.getElementById("totals-footer"),
@@ -62,6 +61,8 @@ const elements = {
 initialize();
 
 function initialize() {
+  normalizeWeekNames();
+
   if (!state.selectedWeekId || !findWeek(state.selectedWeekId)) {
     state.selectedWeekId = state.weeks[0]?.id ?? null;
   }
@@ -79,18 +80,6 @@ function wireEvents() {
     });
     state.weeks.push(newWeek);
     state.selectedWeekId = newWeek.id;
-    commit();
-  });
-
-  elements.deleteWeekBtn.addEventListener("click", () => {
-    if (state.weeks.length === 1) {
-      window.alert("Keep at least one week in the board.");
-      return;
-    }
-
-    const currentWeek = getSelectedWeek();
-    state.weeks = state.weeks.filter((week) => week.id !== currentWeek.id);
-    state.selectedWeekId = state.weeks[0].id;
     commit();
   });
 
@@ -181,7 +170,7 @@ function renderGames() {
       <td>${textInput(game.kennyAction, "Kenny betting action", game.id, "kennyAction")}</td>
       <td class="score-cell">${actionSelect(game.id, "kennyActionResult", game.kennyActionResult, "win")}</td>
       <td class="score-cell">${actionSelect(game.id, "kennyActionResult", game.kennyActionResult, "loss")}</td>
-      <td><button class="delete-row-btn" type="button" data-delete-id="${game.id}" aria-label="Delete game">×</button></td>
+      <td></td>
     `;
 
     elements.gamesBody.appendChild(row);
@@ -254,18 +243,6 @@ function bindGameInputs() {
       const field = event.target.dataset.field;
       const point = event.target.dataset.point;
       updateActionResult(gameId, field, event.target.value === point ? point : "");
-    });
-  });
-
-  elements.gamesBody.querySelectorAll("[data-delete-id]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const gameId = button.dataset.deleteId;
-      const week = getSelectedWeek();
-      week.games = week.games.filter((game) => game.id !== gameId);
-      if (week.games.length === 0) {
-        week.games.push(createGame());
-      }
-      commit();
     });
   });
 }
@@ -385,6 +362,7 @@ function importData(event) {
         throw new Error("Invalid data");
       }
       state = imported;
+      normalizeWeekNames();
       if (!state.selectedWeekId || !findWeek(state.selectedWeekId)) {
         state.selectedWeekId = state.weeks[0].id;
       }
@@ -399,6 +377,7 @@ function importData(event) {
 }
 
 function commit() {
+  normalizeWeekNames();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   render();
 }
@@ -435,16 +414,13 @@ function findWeek(id) {
 }
 
 function getNextWeekNumber() {
-  const highestWeekNumber = state.weeks.reduce((highest, week) => {
-    const match = /^Week\s+(\d+)$/i.exec((week.name || "").trim());
-    if (!match) {
-      return highest;
-    }
+  return state.weeks.length;
+}
 
-    return Math.max(highest, Number(match[1]));
-  }, 0);
-
-  return highestWeekNumber + 1;
+function normalizeWeekNames() {
+  state.weeks.forEach((week, index) => {
+    week.name = `Week ${index}`;
+  });
 }
 
 function normalize(value) {
