@@ -308,6 +308,18 @@ thead th {
   letter-spacing: 0.03em;
 }
 
+th:first-child,
+td:first-child {
+  min-width: 240px;
+}
+
+th:nth-child(12),
+td:nth-child(12),
+th:nth-child(15),
+td:nth-child(15) {
+  min-width: 180px;
+}
+
 thead th:nth-child(4),
 thead th:nth-child(5),
 thead th:nth-child(6),

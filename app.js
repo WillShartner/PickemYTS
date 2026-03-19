@@ -230,7 +230,7 @@ function renderTotals() {
 
 function bindGameInputs() {
   elements.gamesBody.querySelectorAll("input").forEach((input) => {
-    input.addEventListener("input", (event) => {
+    input.addEventListener("change", (event) => {
       const gameId = event.target.dataset.gameId;
       const field = event.target.dataset.field;
       updateGame(gameId, field, event.target.value);
