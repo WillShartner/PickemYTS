@@ -26,16 +26,18 @@ function createGame(overrides = {}) {
   return {
     id: crypto.randomUUID(),
     matchup: overrides.matchup ?? "",
-    actualWinner: overrides.actualWinner ?? "",
-    actualLoser: overrides.actualLoser ?? "",
+    russPick: overrides.russPick ?? "",
+    kennyPick: overrides.kennyPick ?? "",
     russPickWinner: overrides.russPickWinner ?? "",
     russPickLoser: overrides.russPickLoser ?? "",
     kennyPickWinner: overrides.kennyPickWinner ?? "",
     kennyPickLoser: overrides.kennyPickLoser ?? "",
     russAction: overrides.russAction ?? "",
-    russActionResult: overrides.russActionResult ?? "",
+    russActionWin: overrides.russActionWin ?? "",
+    russActionLoss: overrides.russActionLoss ?? "",
     kennyAction: overrides.kennyAction ?? "",
-    kennyActionResult: overrides.kennyActionResult ?? "",
+    kennyActionWin: overrides.kennyActionWin ?? "",
+    kennyActionLoss: overrides.kennyActionLoss ?? "",
   };
 }
 
@@ -45,9 +47,6 @@ const elements = {
   weekList: document.getElementById("week-list"),
   weekTitleDisplay: document.getElementById("week-title-display"),
   weekSubtitle: document.getElementById("week-subtitle"),
-  weekNameInput: document.getElementById("week-name-input"),
-  seasonInput: document.getElementById("season-input"),
-  weekNotesInput: document.getElementById("week-notes-input"),
   addWeekBtn: document.getElementById("add-week-btn"),
   addGameBtn: document.getElementById("add-game-btn"),
   gamesBody: document.getElementById("games-body"),
@@ -89,22 +88,6 @@ function wireEvents() {
     commit();
   });
 
-  elements.seasonInput.addEventListener("input", (event) => {
-    updateSelectedWeek("season", event.target.value, false);
-  });
-
-  elements.seasonInput.addEventListener("blur", (event) => {
-    updateSelectedWeek("season", event.target.value, true);
-  });
-
-  elements.weekNotesInput.addEventListener("input", (event) => {
-    updateSelectedWeek("notes", event.target.value, false);
-  });
-
-  elements.weekNotesInput.addEventListener("blur", (event) => {
-    updateSelectedWeek("notes", event.target.value, true);
-  });
-
   elements.exportBtn.addEventListener("click", exportData);
   elements.importFile.addEventListener("change", importData);
 }
@@ -138,10 +121,6 @@ function renderWeekMeta() {
 
   elements.weekTitleDisplay.textContent = week.name || "Untitled Week";
   elements.weekSubtitle.textContent = `${week.season || "Season not set"} • ${week.games.length} game${week.games.length === 1 ? "" : "s"} on the board`;
-
-  elements.weekNameInput.value = week.name;
-  elements.seasonInput.value = week.season;
-  elements.weekNotesInput.value = week.notes;
 }
 
 function renderGames() {
@@ -149,39 +128,60 @@ function renderGames() {
   elements.gamesBody.innerHTML = "";
 
   if (!week || week.games.length === 0) {
-    elements.gamesBody.innerHTML = `<tr><td colspan="18" class="empty-state">No games yet. Add the matchups you want for this week.</td></tr>`;
+    elements.gamesBody.innerHTML = `<tr><td colspan="11" class="empty-state">No games yet. Add the matchups you want for this week.</td></tr>`;
     return;
   }
 
   week.games.forEach((game) => {
-    const row = document.createElement("tr");
-    const russPick = calculatePickScore(game.russPickWinner, game.russPickLoser, game.actualWinner, game.actualLoser);
-    const kennyPick = calculatePickScore(game.kennyPickWinner, game.kennyPickLoser, game.actualWinner, game.actualLoser);
-    const russAction = calculateActionScore(game.russAction, game.russActionResult);
-    const kennyAction = calculateActionScore(game.kennyAction, game.kennyActionResult);
-
-    row.innerHTML = `
-      <td>${textInput(game.matchup, "Game", game.id, "matchup")}</td>
-      <td>${textInput(game.actualWinner, "Winner", game.id, "actualWinner")}</td>
-      <td>${textInput(game.actualLoser, "Loser", game.id, "actualLoser")}</td>
-      <td>${textInput(game.russPickWinner, "Russ winner pick", game.id, "russPickWinner")}</td>
-      <td>${textInput(game.russPickLoser, "Russ loser pick", game.id, "russPickLoser")}</td>
-      <td class="score-cell">${scorePill(russPick.win, "win")}</td>
-      <td class="score-cell">${scorePill(russPick.loss, "loss")}</td>
-      <td>${textInput(game.kennyPickWinner, "Kenny winner pick", game.id, "kennyPickWinner")}</td>
-      <td>${textInput(game.kennyPickLoser, "Kenny loser pick", game.id, "kennyPickLoser")}</td>
-      <td class="score-cell">${scorePill(kennyPick.win, "win")}</td>
-      <td class="score-cell">${scorePill(kennyPick.loss, "loss")}</td>
-      <td>${textInput(game.russAction, "Russ betting action", game.id, "russAction")}</td>
-      <td class="score-cell">${actionSelect(game.id, "russActionResult", game.russActionResult, "win")}</td>
-      <td class="score-cell">${actionSelect(game.id, "russActionResult", game.russActionResult, "loss")}</td>
-      <td>${textInput(game.kennyAction, "Kenny betting action", game.id, "kennyAction")}</td>
-      <td class="score-cell">${actionSelect(game.id, "kennyActionResult", game.kennyActionResult, "win")}</td>
-      <td class="score-cell">${actionSelect(game.id, "kennyActionResult", game.kennyActionResult, "loss")}</td>
-      <td></td>
+    const gameRow = document.createElement("tr");
+    gameRow.className = "game-block-row game-main-row";
+    gameRow.innerHTML = `
+      <td class="col-game">${textInput(game.matchup, game.id, "matchup")}</td>
+      <td class="col-compact" rowspan="3">${textInput(game.russPick, game.id, "russPick")}</td>
+      <td class="col-compact" rowspan="3">${textInput(game.kennyPick, game.id, "kennyPick")}</td>
+      <td class="col-compact" rowspan="3">${textInput(game.russPickWinner, game.id, "russPickWinner")}</td>
+      <td class="col-compact" rowspan="3">${textInput(game.russPickLoser, game.id, "russPickLoser")}</td>
+      <td class="col-compact" rowspan="3">${textInput(game.kennyPickWinner, game.id, "kennyPickWinner")}</td>
+      <td class="col-compact" rowspan="3">${textInput(game.kennyPickLoser, game.id, "kennyPickLoser")}</td>
+      <td class="col-compact action-empty"></td>
+      <td class="col-compact action-empty"></td>
+      <td class="col-compact action-empty"></td>
+      <td class="col-compact action-empty"></td>
     `;
 
-    elements.gamesBody.appendChild(row);
+    const russActionRow = document.createElement("tr");
+    russActionRow.className = "game-block-row";
+    russActionRow.innerHTML = `
+      <td class="col-game">
+        <label class="stacked-row-field">
+          <span>Russ Action</span>
+          ${textInput(game.russAction, game.id, "russAction")}
+        </label>
+      </td>
+      <td class="col-compact">${textInput(game.russActionWin, game.id, "russActionWin")}</td>
+      <td class="col-compact">${textInput(game.russActionLoss, game.id, "russActionLoss")}</td>
+      <td class="col-compact action-empty"></td>
+      <td class="col-compact action-empty"></td>
+    `;
+
+    const kennyActionRow = document.createElement("tr");
+    kennyActionRow.className = "game-block-row";
+    kennyActionRow.innerHTML = `
+      <td class="col-game">
+        <label class="stacked-row-field">
+          <span>Kenny Action</span>
+          ${textInput(game.kennyAction, game.id, "kennyAction")}
+        </label>
+      </td>
+      <td class="col-compact action-empty"></td>
+      <td class="col-compact action-empty"></td>
+      <td class="col-compact">${textInput(game.kennyActionWin, game.id, "kennyActionWin")}</td>
+      <td class="col-compact">${textInput(game.kennyActionLoss, game.id, "kennyActionLoss")}</td>
+    `;
+
+    elements.gamesBody.appendChild(gameRow);
+    elements.gamesBody.appendChild(russActionRow);
+    elements.gamesBody.appendChild(kennyActionRow);
   });
 
   bindGameInputs();
@@ -193,10 +193,10 @@ function renderScoreboard() {
   const totals = summarizeWeek(week);
 
   const cards = [
-    { title: "Russ Pick Points", value: totals.russPickWins, detail: `${totals.russPickLosses} wrong` },
-    { title: "Russ Action Points", value: totals.russActionWins, detail: `${totals.russActionLosses} wrong` },
-    { title: "Kenny Pick Points", value: totals.kennyPickWins, detail: `${totals.kennyPickLosses} wrong` },
-    { title: "Kenny Action Points", value: totals.kennyActionWins, detail: `${totals.kennyActionLosses} wrong` },
+    { title: "Russ Pick Points", value: totals.russPickWins, detail: `${totals.russPickWins} Correct, ${totals.russPickLosses} Incorrect` },
+    { title: "Russ Action Points", value: totals.russActionWins, detail: `${totals.russActionWins} Correct, ${totals.russActionLosses} Incorrect` },
+    { title: "Kenny Pick Points", value: totals.kennyPickWins, detail: `${totals.kennyPickWins} Correct, ${totals.kennyPickLosses} Incorrect` },
+    { title: "Kenny Action Points", value: totals.kennyActionWins, detail: `${totals.kennyActionWins} Correct, ${totals.kennyActionLosses} Incorrect` },
   ];
 
   elements.scoreboard.innerHTML = cards
@@ -204,7 +204,6 @@ function renderScoreboard() {
       (card) => `
         <article class="score-card">
           <h3>${card.title}</h3>
-          <div class="score-number">${card.value}</div>
           <p>${card.detail}</p>
         </article>
       `,
@@ -219,71 +218,98 @@ function renderTotals() {
 
   elements.totalsFooter.innerHTML = `
     <tr>
-      <td colspan="5">Totals</td>
+      <td>Totals</td>
+      <td></td>
+      <td></td>
       <td class="score-cell">${scorePill(totals.russPickWins, "win")}</td>
       <td class="score-cell">${scorePill(totals.russPickLosses, "loss")}</td>
-      <td colspan="2"></td>
       <td class="score-cell">${scorePill(totals.kennyPickWins, "win")}</td>
       <td class="score-cell">${scorePill(totals.kennyPickLosses, "loss")}</td>
-      <td></td>
       <td class="score-cell">${scorePill(totals.russActionWins, "win")}</td>
       <td class="score-cell">${scorePill(totals.russActionLosses, "loss")}</td>
-      <td></td>
       <td class="score-cell">${scorePill(totals.kennyActionWins, "win")}</td>
       <td class="score-cell">${scorePill(totals.kennyActionLosses, "loss")}</td>
-      <td></td>
     </tr>
   `;
 }
 
 function bindGameInputs() {
-  elements.gamesBody.querySelectorAll("input, textarea").forEach((input) => {
-    if (input.tagName === "TEXTAREA") {
-      autoResizeTextarea(input);
+  const rowControls = Array.from(elements.gamesBody.querySelectorAll("input"));
+
+  rowControls.forEach((control, index) => {
+    control.dataset.tabIndex = String(index);
+    control.addEventListener("keydown", handleGameGridTabbing);
+
+    if (control.tagName === "INPUT") {
+      control.addEventListener("input", (event) => {
+        const gameId = event.target.dataset.gameId;
+        const field = event.target.dataset.field;
+        updateGame(gameId, field, event.target.value, false);
+      });
+
+      control.addEventListener("blur", (event) => {
+        const gameId = event.target.dataset.gameId;
+        const field = event.target.dataset.field;
+        updateGame(gameId, field, event.target.value, true);
+      });
+      return;
     }
 
-    input.addEventListener("input", (event) => {
-      const gameId = event.target.dataset.gameId;
-      const field = event.target.dataset.field;
-      updateGame(gameId, field, event.target.value, false);
-      if (event.target.tagName === "TEXTAREA") {
-        autoResizeTextarea(event.target);
-      }
-    });
-
-    input.addEventListener("blur", (event) => {
-      const gameId = event.target.dataset.gameId;
-      const field = event.target.dataset.field;
-      updateGame(gameId, field, event.target.value, true);
-    });
   });
+}
 
-  elements.gamesBody.querySelectorAll("select").forEach((select) => {
-    select.addEventListener("change", (event) => {
-      const gameId = event.target.dataset.gameId;
-      const field = event.target.dataset.field;
-      const point = event.target.dataset.point;
-      updateActionResult(gameId, field, event.target.value === point ? point : "");
-    });
-  });
+function handleGameGridTabbing(event) {
+  if (event.key !== "Tab") {
+    return;
+  }
+
+  const controls = Array.from(elements.gamesBody.querySelectorAll("input"));
+  const currentIndex = Number(event.target.dataset.tabIndex);
+  const targetIndex = currentIndex + (event.shiftKey ? -1 : 1);
+  const nextControl = controls[targetIndex];
+
+  if (!nextControl) {
+    return;
+  }
+
+  event.preventDefault();
+
+  if (event.target.tagName === "INPUT") {
+    updateGame(
+      event.target.dataset.gameId,
+      event.target.dataset.field,
+      event.target.value,
+      true,
+    );
+  }
+
+  window.setTimeout(() => {
+    const refreshedControls = Array.from(elements.gamesBody.querySelectorAll("input"));
+    const refreshedTarget = refreshedControls[targetIndex];
+
+    if (!refreshedTarget) {
+      return;
+    }
+
+    refreshedTarget.focus();
+
+    if (refreshedTarget.tagName === "INPUT" && typeof refreshedTarget.select === "function") {
+      refreshedTarget.select();
+    }
+  }, 0);
 }
 
 function summarizeWeek(week) {
   return week.games.reduce(
     (totals, game) => {
-      const russPick = calculatePickScore(game.russPickWinner, game.russPickLoser, game.actualWinner, game.actualLoser);
-      const kennyPick = calculatePickScore(game.kennyPickWinner, game.kennyPickLoser, game.actualWinner, game.actualLoser);
-      const russAction = calculateActionScore(game.russAction, game.russActionResult);
-      const kennyAction = calculateActionScore(game.kennyAction, game.kennyActionResult);
-
-      totals.russPickWins += russPick.win;
-      totals.russPickLosses += russPick.loss;
-      totals.kennyPickWins += kennyPick.win;
-      totals.kennyPickLosses += kennyPick.loss;
-      totals.russActionWins += russAction.win;
-      totals.russActionLosses += russAction.loss;
-      totals.kennyActionWins += kennyAction.win;
-      totals.kennyActionLosses += kennyAction.loss;
+      totals.russPickWins += parsePointValue(game.russPickWinner);
+      totals.russPickLosses += parsePointValue(game.russPickLoser);
+      totals.kennyPickWins += parsePointValue(game.kennyPickWinner);
+      totals.kennyPickLosses += parsePointValue(game.kennyPickLoser);
+      totals.russActionWins += parsePointValue(game.russActionWin);
+      totals.russActionLosses += parsePointValue(game.russActionLoss);
+      totals.kennyActionWins += parsePointValue(game.kennyActionWin);
+      totals.kennyActionLosses += parsePointValue(game.kennyActionLoss);
       return totals;
     },
     {
@@ -299,48 +325,37 @@ function summarizeWeek(week) {
   );
 }
 
-function calculatePickScore(pickWinner, pickLoser, actualWinner, actualLoser) {
-  if (!pickWinner.trim() || !pickLoser.trim() || !actualWinner.trim() || !actualLoser.trim()) {
-    return { win: 0, loss: 0 };
-  }
+function textInput(value, gameId, field) {
+  const classNames = [];
+  let maxLength = "";
 
-  const isRight =
-    normalize(pickWinner) === normalize(actualWinner) &&
-    normalize(pickLoser) === normalize(actualLoser);
-
-  return {
-    win: isRight ? 1 : 0,
-    loss: isRight ? 0 : 1,
-  };
-}
-
-function calculateActionScore(action, result) {
-  if (!action.trim()) {
-    return { win: 0, loss: 0 };
-  }
-
-  return {
-    win: result === "win" ? 1 : 0,
-    loss: result === "loss" ? 1 : 0,
-  };
-}
-
-function actionSelect(gameId, field, currentValue, pointType) {
-  const selected = currentValue === pointType ? "selected" : "";
-  return `
-    <select class="action-select" data-game-id="${gameId}" data-field="${field}" data-point="${pointType}" aria-label="${pointType}">
-      <option value="">0</option>
-      <option value="${pointType}" ${selected}>1</option>
-    </select>
-  `;
-}
-
-function textInput(value, placeholder, gameId, field) {
   if (field === "matchup") {
-    return `<textarea class="game-textarea" rows="2" placeholder="${placeholder}" data-game-id="${gameId}" data-field="${field}">${escapeHtml(value)}</textarea>`;
+    classNames.push("game-text-input");
+    maxLength = ' maxlength="25"';
   }
 
-  return `<input type="text" value="${escapeAttribute(value)}" placeholder="${placeholder}" data-game-id="${gameId}" data-field="${field}">`;
+  if (
+    field === "russPick" ||
+    field === "kennyPick" ||
+    field === "russPickWinner" ||
+    field === "russPickLoser" ||
+    field === "kennyPickWinner" ||
+    field === "kennyPickLoser" ||
+    field === "russActionWin" ||
+    field === "russActionLoss" ||
+    field === "kennyActionWin" ||
+    field === "kennyActionLoss"
+  ) {
+    classNames.push("compact-score-input");
+  }
+
+  if (field === "russAction" || field === "kennyAction") {
+    classNames.push("action-text-input");
+    maxLength = ' maxlength="40"';
+  }
+
+  const classAttribute = classNames.length ? ` class="${classNames.join(" ")}"` : "";
+  return `<input${classAttribute} type="text" value="${escapeAttribute(value)}"${maxLength} data-game-id="${gameId}" data-field="${field}">`;
 }
 
 function scorePill(value, type) {
@@ -361,12 +376,6 @@ function updateGame(gameId, field, value, shouldCommit = true) {
   if (shouldCommit) {
     commit();
   }
-}
-
-function updateActionResult(gameId, field, value) {
-  const game = getSelectedWeek().games.find((entry) => entry.id === gameId);
-  game[field] = value;
-  commit();
 }
 
 function exportData() {
@@ -469,7 +478,12 @@ function escapeAttribute(value) {
   return escapeHtml(value ?? "");
 }
 
-function autoResizeTextarea(textarea) {
-  textarea.style.height = "auto";
-  textarea.style.height = `${textarea.scrollHeight}px`;
+function parsePointValue(value) {
+  const normalized = String(value ?? "").trim();
+  if (!normalized) {
+    return 0;
+  }
+
+  const numericValue = Number(normalized);
+  return Number.isFinite(numericValue) ? numericValue : 0;
 }

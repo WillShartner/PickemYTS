@@ -46,23 +46,6 @@
         </div>
       </section>
 
-      <section class="panel">
-        <div class="meta-grid">
-          <label>
-            <span>Week Name</span>
-            <input id="week-name-input" type="text" placeholder="Week 1" readonly>
-          </label>
-          <label>
-            <span>Season</span>
-            <input id="season-input" type="text" placeholder="2026">
-          </label>
-          <label>
-            <span>Date / Notes</span>
-            <input id="week-notes-input" type="text" placeholder="Opening weekend">
-          </label>
-        </div>
-      </section>
-
       <section class="scoreboard-grid" id="scoreboard"></section>
 
       <section class="panel">
@@ -78,24 +61,17 @@
           <table>
             <thead>
               <tr>
-                <th>Game</th>
-                <th>Winner</th>
-                <th>Loser</th>
-                <th>Russ Pick W</th>
-                <th>Russ Pick L</th>
-                <th>R Pick W</th>
-                <th>R Pick L</th>
-                <th>Kenny Pick W</th>
-                <th>Kenny Pick L</th>
-                <th>K Pick W</th>
-                <th>K Pick L</th>
-                <th>Russ Action</th>
-                <th>R Act W</th>
-                <th>R Act L</th>
-                <th>Kenny Action</th>
-                <th>K Act W</th>
-                <th>K Act L</th>
-                <th></th>
+                <th class="col-game col-game-header">Game</th>
+                <th class="col-compact">R Pick</th>
+                <th class="col-compact">K Pick</th>
+                <th class="col-compact">R Pick<br>W</th>
+                <th class="col-compact">R Pick<br>L</th>
+                <th class="col-compact">K Pick<br>W</th>
+                <th class="col-compact">K Pick<br>L</th>
+                <th class="col-compact">R Act W</th>
+                <th class="col-compact">R Act L</th>
+                <th class="col-compact">K Act W</th>
+                <th class="col-compact">K Act L</th>
               </tr>
             </thead>
             <tbody id="games-body"></tbody>

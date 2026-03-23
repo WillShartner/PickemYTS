@@ -9,7 +9,7 @@
   --text: #f2f5ff;
   --muted: #9aa7c7;
   --purple: #8d4cff;
-  --blue: #26a4ff;
+  --blue: #2f6fff;
   --green: #2ed28a;
   --red: #ff6a82;
   --amber: #ffbf47;
@@ -33,8 +33,7 @@ body {
 
 button,
 input,
-select,
-textarea {
+select {
   font: inherit;
 }
 
@@ -238,8 +237,7 @@ label span {
 }
 
 input,
-select,
-textarea {
+select {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -252,14 +250,8 @@ input[type="text"] {
   min-width: 0;
 }
 
-textarea {
-  resize: vertical;
-  line-height: 1.35;
-}
-
 input:focus,
-select:focus,
-textarea:focus {
+select:focus {
   outline: 2px solid rgba(38, 164, 255, 0.38);
   border-color: rgba(38, 164, 255, 0.42);
 }
@@ -320,47 +312,95 @@ thead th {
   letter-spacing: 0.03em;
 }
 
-th:first-child,
-td:first-child {
-  min-width: 420px;
+thead th.col-game-header {
+  background: rgba(46, 210, 138, 0.2);
 }
 
-th:nth-child(12),
-td:nth-child(12),
-th:nth-child(15),
-td:nth-child(15) {
-  min-width: 180px;
-}
-
-#games-body td:first-child input {
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-
-#games-body td:first-child textarea {
-  min-height: 76px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
+thead th:nth-child(2),
 thead th:nth-child(4),
 thead th:nth-child(5),
-thead th:nth-child(6),
-thead th:nth-child(7),
-thead th:nth-child(12),
-thead th:nth-child(13),
-thead th:nth-child(14) {
+thead th:nth-child(8),
+thead th:nth-child(9) {
   background: rgba(141, 76, 255, 0.24);
 }
 
-thead th:nth-child(8),
-thead th:nth-child(9),
+thead th:nth-child(3),
+thead th:nth-child(6),
+thead th:nth-child(7),
 thead th:nth-child(10),
 thead th:nth-child(11),
-thead th:nth-child(15),
-thead th:nth-child(16),
-thead th:nth-child(17) {
-  background: rgba(38, 164, 255, 0.24);
+thead th:nth-child(12),
+thead th:nth-child(13) {
+  background: rgba(47, 111, 255, 0.28);
+}
+
+.col-game {
+  min-width: 40ch;
+  width: 40ch;
+  max-width: 40ch;
+}
+
+.col-compact {
+  min-width: 64px;
+  width: 64px;
+}
+
+#games-body td.col-game input {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  min-height: 46px;
+}
+
+.game-text-input {
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+}
+
+.compact-score-input {
+  width: 36px;
+  min-width: 36px;
+  height: 44px;
+  padding: 0;
+  text-align: center;
+  border-radius: 16px;
+  margin: 0 auto;
+}
+
+.action-text-input {
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+}
+
+.stacked-row-field {
+  display: grid;
+  gap: 6px;
+}
+
+.stacked-row-field span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.game-block-row td {
+  border-bottom: 0;
+}
+
+.game-block-row:last-of-type td,
+.game-block-row td[rowspan] {
+  border-bottom: 1px solid var(--line);
+}
+
+.game-main-row td.col-game {
+  padding-bottom: 6px;
+}
+
+.action-empty {
+  background: rgba(255, 255, 255, 0.01);
 }
 
 tbody tr:hover {
