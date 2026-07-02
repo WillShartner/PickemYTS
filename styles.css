@@ -195,6 +195,11 @@ p {
   gap: 10px;
 }
 
+.sharing-panel #sync-status {
+  margin: 14px 0 0;
+  font-size: 0.95rem;
+}
+
 .file-button,
 #import-file {
   display: none;
