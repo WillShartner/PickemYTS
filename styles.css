@@ -74,6 +74,13 @@ select {
   margin-bottom: 18px;
 }
 
+.brand-logo {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+}
+
 .eyebrow {
   margin: 0 0 8px;
   letter-spacing: 0.12em;

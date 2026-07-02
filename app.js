@@ -1,4 +1,9 @@
 const STORAGE_KEY = "yts-pickem-data-v1";
+const SELECTED_WEEK_KEY = "yts-pickem-selected-week-v1";
+const BOARD_ROW_ID = "main";
+
+let supabaseClient = null;
+let isApplyingRemoteState = false;
 
 const defaultState = () => ({
   weeks: [
@@ -41,7 +46,7 @@ function createGame(overrides = {}) {
   };
 }
 
-let state = loadState();
+let state = defaultState();
 
 const elements = {
   weekList: document.getElementById("week-list"),
@@ -52,14 +57,16 @@ const elements = {
   gamesBody: document.getElementById("games-body"),
   totalsFooter: document.getElementById("totals-footer"),
   scoreboard: document.getElementById("scoreboard"),
-  exportBtn: document.getElementById("export-btn"),
-  importFile: document.getElementById("import-file"),
+  syncStatus: document.getElementById("sync-status"),
+  saveSharedBtn: document.getElementById("save-shared-btn"),
+  loadSharedBtn: document.getElementById("load-shared-btn"),
   weekButtonTemplate: document.getElementById("week-button-template"),
 };
 
 initialize();
 
-function initialize() {
+async function initialize() {
+  state = await loadState();
   normalizeWeekNames();
 
   if (!state.selectedWeekId || !findWeek(state.selectedWeekId)) {
@@ -68,6 +75,7 @@ function initialize() {
 
   wireEvents();
   render();
+  subscribeToBoardChanges();
 }
 
 function wireEvents() {
@@ -88,8 +96,13 @@ function wireEvents() {
     commit();
   });
 
-  elements.exportBtn.addEventListener("click", exportData);
-  elements.importFile.addEventListener("change", importData);
+  elements.saveSharedBtn.addEventListener("click", () => {
+    saveSharedState(state, true);
+  });
+
+  elements.loadSharedBtn.addEventListener("click", () => {
+    refreshSharedState(true);
+  });
 }
 
 function render() {
@@ -417,10 +430,50 @@ function importData(event) {
 function commit() {
   normalizeWeekNames();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.setItem(SELECTED_WEEK_KEY, state.selectedWeekId || "");
   render();
+  saveSharedState();
 }
 
-function loadState() {
+async function loadState() {
+  const localState = loadLocalState();
+  initializeSupabaseClient();
+
+  if (!supabaseClient) {
+    setSyncStatus("Local only. Add Supabase keys in config.js to share this board.");
+    setSharingButtonsDisabled(true);
+    return localState;
+  }
+
+  setSharingButtonsDisabled(false);
+
+  try {
+    const { data, error } = await supabaseClient
+      .from("board_state")
+      .select("data")
+      .eq("id", BOARD_ROW_ID)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    if (data?.data?.weeks?.length) {
+      setSyncStatus("Shared sync is connected.");
+      return mergeSharedState(data.data, localState.selectedWeekId);
+    }
+
+    await saveSharedState(localState);
+    setSyncStatus("Shared sync is connected.");
+    return localState;
+  } catch (error) {
+    console.error(error);
+    setSyncStatus(`Shared sync error: ${getErrorMessage(error)}`);
+    return localState;
+  }
+}
+
+function loadLocalState() {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (!saved) {
     const initialState = defaultState();
@@ -434,6 +487,7 @@ function loadState() {
     if (!Array.isArray(parsed.weeks) || parsed.weeks.length === 0) {
       throw new Error("Bad data");
     }
+    parsed.selectedWeekId = localStorage.getItem(SELECTED_WEEK_KEY) || parsed.selectedWeekId;
     return parsed;
   } catch (error) {
     const fallback = defaultState();
@@ -441,6 +495,143 @@ function loadState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(fallback));
     return fallback;
   }
+}
+
+function initializeSupabaseClient() {
+  const config = window.YTSPICKEM_SUPABASE || {};
+  const hasConfig = Boolean(config.url && config.anonKey);
+
+  if (!hasConfig || !window.supabase) {
+    supabaseClient = null;
+    return;
+  }
+
+  supabaseClient = window.supabase.createClient(config.url, config.anonKey);
+}
+
+function mergeSharedState(sharedState, selectedWeekId) {
+  const nextState = {
+    weeks: Array.isArray(sharedState.weeks) && sharedState.weeks.length
+      ? sharedState.weeks
+      : defaultState().weeks,
+    selectedWeekId,
+  };
+
+  if (!nextState.selectedWeekId || !nextState.weeks.some((week) => week.id === nextState.selectedWeekId)) {
+    nextState.selectedWeekId = nextState.weeks[0]?.id ?? null;
+  }
+
+  return nextState;
+}
+
+async function saveSharedState(nextState = state, wasManualSave = false) {
+  if (!supabaseClient || isApplyingRemoteState) {
+    if (wasManualSave) {
+      setSyncStatus("Cannot save yet. Supabase is not connected.");
+    }
+    return;
+  }
+
+  try {
+    if (wasManualSave) {
+      setSyncStatus("Saving shared board...");
+    }
+
+    const { error } = await supabaseClient
+      .from("board_state")
+      .upsert({
+        id: BOARD_ROW_ID,
+        data: { weeks: nextState.weeks },
+        updated_at: new Date().toISOString(),
+      });
+
+    if (error) {
+      throw error;
+    }
+
+    setSyncStatus(`Saved to shared board at ${formatTime(new Date())}.`);
+  } catch (error) {
+    console.error(error);
+    setSyncStatus(`Shared save error: ${getErrorMessage(error)}`);
+  }
+}
+
+function subscribeToBoardChanges() {
+  if (!supabaseClient) {
+    return;
+  }
+
+  window.setInterval(refreshSharedState, 5000);
+}
+
+async function refreshSharedState(wasManualRefresh = false) {
+  if (!supabaseClient) {
+    if (wasManualRefresh) {
+      setSyncStatus("Cannot load yet. Supabase is not connected.");
+    }
+    return;
+  }
+
+  if (!wasManualRefresh && document.activeElement?.matches("#games-body input")) {
+    return;
+  }
+
+  try {
+    if (wasManualRefresh) {
+      setSyncStatus("Loading latest shared board...");
+    }
+
+    const { data, error } = await supabaseClient
+      .from("board_state")
+      .select("data")
+      .eq("id", BOARD_ROW_ID)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data?.data?.weeks?.length) {
+      if (wasManualRefresh) {
+        setSyncStatus("No shared board has been saved yet.");
+      }
+      return;
+    }
+
+    isApplyingRemoteState = true;
+    state = mergeSharedState(data.data, state.selectedWeekId);
+    normalizeWeekNames();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    render();
+    isApplyingRemoteState = false;
+    setSyncStatus(`Loaded latest shared board at ${formatTime(new Date())}.`);
+  } catch (error) {
+    isApplyingRemoteState = false;
+    console.error(error);
+    setSyncStatus(`Shared load error: ${getErrorMessage(error)}`);
+  }
+}
+
+function setSyncStatus(message) {
+  if (elements.syncStatus) {
+    elements.syncStatus.textContent = message;
+  }
+}
+
+function setSharingButtonsDisabled(isDisabled) {
+  [elements.saveSharedBtn, elements.loadSharedBtn].forEach((button) => {
+    if (button) {
+      button.disabled = isDisabled;
+    }
+  });
+}
+
+function getErrorMessage(error) {
+  return error?.message || "Unknown Supabase problem.";
+}
+
+function formatTime(date) {
+  return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
 function getSelectedWeek() {
